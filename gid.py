@@ -1,8 +1,19 @@
 # coding: utf-8
 # py3
 __author__ = 'odmen'
-import glob, os, sys, re, hashlib, csv
+import glob
+import os
+import sys
+import re
+import hashlib
+import csv
+import shutil
 from functools import partial
+
+for arg in sys.argv:
+  currindex = sys.argv.index(arg)
+  if arg == "-p":
+    work_dir = sys.argv[currindex+1]
 
 # считает md5 сумму файла
 # на вход принимает полный путь до файла
@@ -15,18 +26,13 @@ def md5sum(filename):
 
 hash_names = {}
 img_regex = re.compile("\.(jpg|jpeg|png)$")
-in_csv = "/tmp/test.csv"
-out_csv = "/tmp/res_test.csv"
+in_csv = work_dir+"in.csv"
+out_csv = work_dir+"out.csv"
 
-for arg in sys.argv:
-  currindex = sys.argv.index(arg)
-  if arg == "-p":
-    img_dir = sys.argv[currindex+1]
-
-os.chdir(img_dir)
+os.chdir(work_dir)
 for filename in glob.glob("*.*"):
   if img_regex.search(filename):
-    filemd5 = md5sum(img_dir+filename)
+    filemd5 = md5sum(work_dir+filename)
     # print(filemd5+" "+filename)
     if filemd5 in hash_names:
       hash_names[filemd5].append(filename)
@@ -37,21 +43,23 @@ with open(in_csv, "r") as infile, open(out_csv, "w") as outfile:
     r = csv.DictReader(infile, delimiter=';')
     w = csv.DictWriter(outfile, r.fieldnames, delimiter=';')
     w.writeheader()
-# обходим каждую строку
     for row in r:
-# обходим элементы словаря "хеш : список имен файлов"
+# обходим каждую строку
       for fhash in hash_names:
-# берем каждый список файлов по текушему выбранному хешу
+# обходим элементы словаря { 'хеш' : [список, имен, файлов] }
         for file_img in hash_names[fhash]:
-# разбиваем колонку с изображениями по запятой
+# берем каждый список файлов по текушему выбранному хешу
           row_img_list = row["image : Image"].split(',')
-# если текущее имя файла найдено в текущем имени файла из csv
+# разбиваем колонку с изображениями по запятой
           if file_img in row_img_list:
-# берем индекс текущего имени в колонке
+# если текущее имя файла найдено в текущем имени файла из csv
             mtch_img_indx = row_img_list.index(file_img)
-# меняем элемент с таким индексом на первый элемент списка имен файлов по текущему хешу
+# берем индекс текущего имени в колонке
             row_img_list[mtch_img_indx] = hash_names[fhash][0]
-# собираем обратно строку, слепив по запятым и меняем всю колонку в текущей строке на новую
+# меняем элемент с таким индексом на первый элемент списка имен файлов по текущему хешу
+            shutil.copy2(work_dir+hash_names[fhash][0], work_dir+'fd/'+hash_names[fhash][0])
+# копируем файл с таким именем в отдельный каталог для загрузки в СУ
       row["image : Image"] = ','.join(row_img_list)
-# пишем в файл построчно
+# собираем обратно строку, слепив по запятым и меняем всю колонку в текущей строке на новую
       w.writerow(row)
+# пишем в файл построчно
