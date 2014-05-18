@@ -96,7 +96,7 @@ with open(in_csv, "r") as infile, open(out_csv, "w") as outfile:
 # обходим все элементы разбитой строки
             for fhash in hash_names:
 # для каждого элемента обходим весь словарь с хешами
-                if img_name in hash_names[fhash]:
+                if img_name.strip() in hash_names[fhash]:
 # если текущее имя изображения найдено в словаре текущего выбранного хеша
                     mtch_img_indx = row_img_list.index(img_name)
 # узнаем индекс этого имени в текущей строке
